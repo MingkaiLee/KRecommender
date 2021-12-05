@@ -4,6 +4,7 @@ Simple collaborative filtering methods
 from collections import defaultdict
 import numpy as np
 
+__all__ = ['UserCF', 'ItemCF']
 
 class UserCF:
     """
@@ -13,18 +14,16 @@ class UserCF:
         - fit: fit the model with input dataset
         - pred: predict the result of dataset with trained model 
     """
-    def __init__(self) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         """
         Create a UserCF algorithm model instance.
-        You should not put any args in it
         """
         self.ur_train = None
-        pass
 
     def fit(self, ur_train: dict, *args, **kwargs):
         """
         Train the model with train_set
-        In this model it simply prepare the train_set
+        In this model, it simply prepare the train_set
         """
         self.ur_train = ur_train
     
@@ -35,10 +34,10 @@ class UserCF:
         ## Parameters:
             - ur_test: dict, the best way to get it is using BasicLoader class
             - scale: tuple with two elements to show the rating scale
-            - k: the number of most-like users used to recommend items
-            - similarity: the method of calculating similarity, supports ['iif', 'cos', 'jcd]
+            - k: int, the number of most-like users used to recommend items
+            - similarity: str, the method of calculating similarity, supports ['iif', 'cos', 'jcd]
         ## Returns：
-            - ur_pred: dict, 
+            - ur_pred: dict, predicted user_matrix
         """
         ur_pred = dict()
         thresh = (scale[0] + scale[1]) / 2
@@ -95,4 +94,25 @@ class ItemCF:
         pass
 
     def fit(self, ir_train: dict, *args, **kwargs):
-        self.ir_train = None
+        """
+        Train the model with train_set
+        In this model, it simply prepare the train_set
+        """
+        self.ir_train = ir_train
+    
+    def pred(self, ir_test: dict, scale: tuple, k=10, similarity="", *args, **kargs) -> dict:
+        """
+        Predict outputs of trainset
+
+        ## Parameters:
+            - ir_test: dict, the best way to get it is using BasicLoader class
+            - scale: tuple with two elements to show the rating scale
+            - k: int, the number of most-like users used to recommend items
+            - similarity: str, the method of calculating similarity, supports ['iif', 'cos', 'jcd]
+        ## Returns：
+            - ir_pred: dict, predicted user_matrix
+        """
+        # TODO: Realize this simple algorithm
+        pass
+    
+
