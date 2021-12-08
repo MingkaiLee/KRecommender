@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from typing import Iterable
 from torch.optim import SGD
 from torch.autograd import Variable
 from torch import Tensor
@@ -79,22 +80,22 @@ class BasicLFM:
         loss += self.ld*(sum(norm(self.user_mat, dim=0)**2) + sum(norm(self.item_mat, dim=1)**2))
         return loss
 
-    def pred(self, users: list, items: list, df: bool=False) -> np.ndarray:
+    def pred(self, users: Iterable[int], items: Iterable[int], df: bool=False) -> np.ndarray:
         """
         Predict the user-item matrix with input users list and items list
 
         ## Paramters:
-            - users:list[int], your input user list
-            - items:list[int], your input item list
+            - users: Iterable[int], your input user list
+            - items: Iterable[int], your input item list
             - df: bool, if True, return a pandas.DataFrame, default False
         """
-        assert (self.user_mat is not None), "Model should be trained before using."
+        assert (self.user_mat is not None), "Model should be trained before used."
 
         try:
             user_mat = self.user_mat[users,:]
             item_mat = self.item_mat[:,items]
         except:
-            logging.error("Your input list may out of range, expected user:{:d}-{:d}, item:{:d}-{:d}".format(
+            logging.error("Your input list may out of range, expected user:[{:d}-{:d}), item:[{:d}-{:d})".format(
                 0,
                 self.user_mat.shape[0],
                 0,
@@ -107,3 +108,18 @@ class BasicLFM:
                 columns=items
             )
         return matmul(user_mat, item_mat).detach().numpy()
+    
+    def reset(self, **kwargs) -> None:
+        """
+        reset the model parameter
+        """
+        for key, val in kwargs:
+            if hasattr(self, key):
+                setattr(self, key, val)
+        
+        try:
+            self.f = int(self.f)
+            self.lr = float(self.lr)
+            self.ld = float(self.ld)
+        except:
+            logging.error("Type error, please check your input type.")
