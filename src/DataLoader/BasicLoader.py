@@ -14,7 +14,11 @@ class BasicLoader(object):
     convert and split the input data to the type which could be trained and validated.
 
     ## attributes:
-        - load_df()
+        - load_df(): load data from pandas DataFrame.
+        - raw_date: the raw data, list[tuple].
+        - rating_scale: legal rating scale.
+        - train_test_split(): get the train and test user/item matrixes.
+        - train_mat(): get the user-item matrix. 
     """
     def __init__(self, data=None) -> None:
         """Create a basic data loader to help model train and evaluating
@@ -104,13 +108,16 @@ class BasicLoader(object):
     
     def train_mat(self) -> np.ndarray:
         """
+        Convert raw data into matrix which used by LFM algorithms
+
+        TODO(mingkai): return sparse matrix to save memory.
         """
         assert (self.__raw_data != None), 'No data loaded before.'
 
         self.__data_set = self.__construct_data_set()
         mat = np.full(
             shape=(self.__data_set.n_users, self.__data_set.n_items),
-            fill_value=np.nan,
+            fill_value=0.0,
             dtype=float
         )
         for uid, item_list in self.__data_set.ur.items():
@@ -119,6 +126,42 @@ class BasicLoader(object):
         
         return mat
 
+    def train_trans_mat(self) -> tuple:
+        """
+        Convert raw data into sparse matrix used by Graph-based algorithms
+
+        TODO(mingkai): return sparse matrix to save memory.
+
+        ## Returns:
+            - trans_mat: np.ndarray, transition matrix which could be used by PersonalRank algorithm.
+            - user_num: int
+            - item_num: int
+        """
+        assert (self.__raw_data != None), 'No data loaded before.'
+
+        def calcu_out(user_vec: np.ndarray):
+            liked = 0
+            res = np.full(shape=user_vec.shape, fill_value=0.0, dtype=float)
+            for v in user_vec:
+                if v > np.average(self.__rating_scale):
+                    liked += 1
+            for i, v in enumerate(user_vec):
+                if v > np.average(self.__rating_scale):
+                    res[i] = 1 / liked
+            return res
+
+
+        # get raw rating train mat
+        raw_mat = self.train_mat()
+        # change raw rating mat to probability matrix
+        raw_u_mat = np.apply_along_axis(calcu_out, 1, raw_mat)
+        raw_i_mat = np.apply_along_axis(calcu_out, 1, np.transpose(raw_mat, axes=(1, 0)))
+        raw_u_mat = np.hstack((np.full((raw_u_mat.shape[0], raw_u_mat.shape[0]), 0, dtype=float), raw_u_mat))
+        raw_i_mat = np.hstack((raw_i_mat, np.full((raw_i_mat.shape[0], raw_i_mat.shape[0]), 0, dtype=float)))
+        raw_mat = np.vstack((raw_u_mat, raw_i_mat))
+
+        # return sparse.dia_matrix(raw_mat)
+        return (raw_mat, raw_u_mat.shape[0], raw_i_mat.shape[0])
     
     def train_test_split(self, rating=0.8, shuffle=True):
         """split data into train_set and test_set
@@ -182,5 +225,7 @@ class BasicLoader(object):
     
     def k_fold(self) -> object:
         assert (self.__raw_data != None), 'No data loaded before.'
-
+        """
+        TODO(MingkaiLee): K-fold validation dataset partition.
+        """
         pass
